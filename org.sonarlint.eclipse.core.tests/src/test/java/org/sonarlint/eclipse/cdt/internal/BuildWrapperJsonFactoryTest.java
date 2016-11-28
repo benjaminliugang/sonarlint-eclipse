@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.eclipse.cdt.core.parser.IScannerInfo;
@@ -44,15 +45,24 @@ public class BuildWrapperJsonFactoryTest {
   @Test
   public void test() throws IOException, URISyntaxException {
     Map<String, IScannerInfo> info = new HashMap<>();
+    Map<String, String> defines1 = new LinkedHashMap<>();
+    defines1.put("MACRO1", "V1");
+    defines1.put("MACRO2", "V2");
+
     info.put(
       "path/to/file1",
       new ScannerInfo(
         new String[] {"/path/to/include1", "/path/to/include2"},
-        ImmutableMap.of("MACRO1", "V1", "MACRO2", "V2")));
+        defines1));
+
+    Map<String, String> defines2 = new LinkedHashMap<>();
+    defines2.put("MACRO1", "V1");
+    defines2.put("MACRO2", "V2");
+    defines2.put("MACRO3", "V3");
     info.put("\\path\\to\\file2",
       new ScannerInfo(
         new String[] {"path\\to\\include1", "\\path\\to\\include2", "\\path\\to\\include3"},
-        ImmutableMap.of("MACRO1", "V1", "MACRO2", "V2", "MACRO3", "V3")));
+        defines2));
 
     String json = writer.create(info, "/path/to/projectBaseDir");
     assertThat(json).isEqualTo(loadExpected());
@@ -61,7 +71,7 @@ public class BuildWrapperJsonFactoryTest {
 
   private String loadExpected() throws IOException, URISyntaxException {
     String str = new String(Files.readAllBytes(Paths.get("src", "test", "resources", "expected.json")), StandardCharsets.UTF_8);
-    return str.replace("\n", "").replace("\r", "").replace(" ", "");
+    return str.replace("\n", "").replace("\r", "");
   }
 
   private static class ScannerInfo implements IScannerInfo {
