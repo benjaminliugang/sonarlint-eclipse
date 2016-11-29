@@ -66,7 +66,7 @@ public class BuildWrapperJsonFactory {
   private static String probeStderr(String[] includes) {
     StringBuilder builder = new StringBuilder("#include <...> search starts here:\n");
     for (String include : includes) {
-      builder.append(include).append("\n");
+      builder.append(" ").append(include).append("\n");
     }
     builder.append("End of search list.\n");
     return builder.toString();
