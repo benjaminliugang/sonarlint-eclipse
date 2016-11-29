@@ -64,6 +64,7 @@ public class SonarLintCorePlugin extends AbstractPlugin {
   private StandaloneSonarLintClientFacade sonarlint;
   private final ServiceTracker proxyTracker;
   private SonarLintChangeListener sonarLintChangeListener;
+  private MarkerUpdater markerUpdater;
 
   public SonarLintCorePlugin() {
     plugin = this;
@@ -134,6 +135,10 @@ public class SonarLintCorePlugin extends AbstractPlugin {
     }
     return projectManager;
   }
+  
+  public MarkerUpdater markerUpdater() {
+    return markerUpdater;
+  }
 
   @Override
   public void start(BundleContext context) {
@@ -143,8 +148,8 @@ public class SonarLintCorePlugin extends AbstractPlugin {
 
     modulePathManager = new ModulePathManager();
     trackingChangeQueueManager = new TrackingChangeQueueManagerImpl();
-    trackingChangeQueueManager.subscribe(new MarkerUpdater(modulePathManager));
-
+   // trackingChangeQueueManager.subscribe(new MarkerUpdater(modulePathManager));
+     this.markerUpdater = new MarkerUpdater(modulePathManager);
     IssueTrackerCacheFactory factory = localModuleKey -> {
       Path projectBasePath = Paths.get(modulePathManager.getModulePath(localModuleKey));
       Path storeBasePath = StorageManager.getIssuesDir(localModuleKey);
@@ -154,6 +159,10 @@ public class SonarLintCorePlugin extends AbstractPlugin {
     issueTrackerRegistry = new IssueTrackerRegistry(trackingChangeQueueManager, factory);
 
     serverIssueUpdater = new ServerIssueUpdater(issueTrackerRegistry);
+  }
+  
+  public IssueTrackerRegistry issueTrackerRegistry() {
+    return issueTrackerRegistry;
   }
 
   @Override

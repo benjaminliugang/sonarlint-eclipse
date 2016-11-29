@@ -21,6 +21,8 @@ package org.sonarlint.eclipse.core.internal.tracking;
 
 import java.util.Collection;
 
+import org.sonarlint.eclipse.core.internal.SonarLintCorePlugin;
+
 public class TrackingChangeSubmitter {
 
   private final TrackingChangeQueueManager queueManager;
@@ -32,7 +34,8 @@ public class TrackingChangeSubmitter {
   }
 
   public void submit(String file, Collection<Trackable> issues) {
-    queueManager.post(moduleKey, file, issues);
+    //queueManager.post(moduleKey, file, issues);
+    SonarLintCorePlugin.getDefault().markerUpdater().onTrackingChange(moduleKey, file, issues);
   }
 
 }

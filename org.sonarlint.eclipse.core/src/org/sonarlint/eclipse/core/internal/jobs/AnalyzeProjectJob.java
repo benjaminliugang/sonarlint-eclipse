@@ -157,6 +157,8 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
   @Override
   protected IStatus doRun(final IProgressMonitor monitor) {
     long startTime = System.currentTimeMillis();
+    SonarLintCorePlugin.getDefault().debug(String.format("%d Start analysis", System.currentTimeMillis()));
+
     // Analyze
     try {
       // Configure
@@ -178,7 +180,7 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
       }
 
       analysisCompleted(usedConfigurators, mergedExtraProps, monitor);
-      SonarLintCorePlugin.getDefault().debug(String.format("Analysis completed in %d ms", System.currentTimeMillis() - startTime));
+      SonarLintCorePlugin.getDefault().debug(String.format("%d Analysis completed in %d ms", System.currentTimeMillis(), System.currentTimeMillis() - startTime));
     } catch (Exception e) {
       SonarLintCorePlugin.getDefault().error("Error during execution of SonarLint analysis", e);
       return new Status(Status.WARNING, SonarLintCorePlugin.PLUGIN_ID, "Error when executing SonarLint analysis", e);
@@ -355,7 +357,9 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
     return null;
   }
 
-  private static void trackServerIssues(String localModuleKey, String relativePath, IResource resource) {
+  private void trackServerIssues(String localModuleKey, String relativePath, IResource resource) {
+    SonarLintCorePlugin.getDefault().debug(String.format("%d Tracking server issues", System.currentTimeMillis()));
+
     String serverId = SonarLintProject.getInstance(resource).getServerId();
     if (serverId == null) {
       // not bound to a server -> nothing to do
@@ -371,7 +375,9 @@ public class AnalyzeProjectJob extends AbstractSonarProjectJob {
     Server server = (Server) ServersManager.getInstance().getServer(serverId);
     ServerConfiguration serverConfiguration = server.getConfig();
     ConnectedSonarLintEngine engine = server.getEngine();
-    SonarLintCorePlugin.getDefault().getServerIssueUpdater().updateFor(serverConfiguration, engine, localModuleKey, serverModuleKey, relativePath);
+
+    new ServerIssueUpdateJob(getSonarProject(), SonarLintCorePlugin.getDefault().issueTrackerRegistry(),
+      serverConfiguration, engine, localModuleKey, serverModuleKey, relativePath).schedule();
   }
 
   private static void analysisCompleted(Collection<ProjectConfigurator> usedConfigurators, Map<String, String> properties, final IProgressMonitor monitor) {
