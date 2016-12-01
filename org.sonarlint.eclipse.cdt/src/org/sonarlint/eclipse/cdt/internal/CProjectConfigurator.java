@@ -54,24 +54,26 @@ public class CProjectConfigurator extends ProjectConfigurator {
   private final Predicate<IFile> fileValidator;
   private final SonarLintCorePlugin core;
   private final FilePathResolver filePathResolver;
+  private final FileSuffixes fileSuffixes;
 
   public CProjectConfigurator() {
-    this(new BuildWrapperJsonFactory(), CCorePlugin.getDefault(), CoreModel::isTranslationUnit, SonarLintCorePlugin.getDefault(),
+    this(new BuildWrapperJsonFactory(), CCorePlugin.getDefault(), new FileValidator(), new FileSuffixes(), SonarLintCorePlugin.getDefault(),
       new FilePathResolver());
   }
 
   public CProjectConfigurator(BuildWrapperJsonFactory jsonFactory, CCorePlugin cCorePlugin, Predicate<IFile> fileValidator, 
-    SonarLintCorePlugin core, FilePathResolver filePathResolver) {
+    FileSuffixes suffixes, SonarLintCorePlugin core, FilePathResolver filePathResolver) {
     this.jsonFactory = jsonFactory;
     this.cCorePlugin = cCorePlugin;
     this.fileValidator = fileValidator;
     this.core = core;
     this.filePathResolver = filePathResolver;
+    this.fileSuffixes = suffixes;
   }
 
   @Override
   public boolean canConfigure(IProject project) {
-    return SonarCdtPlugin.hasCNature(project);
+    return SonarCdtPlugin.hasCdtNature(project);
   }
 
   @Override
@@ -79,12 +81,13 @@ public class CProjectConfigurator extends ProjectConfigurator {
     Collection<IFile> filesToAnalyze = request.getFilesToAnalyze()
       .stream().filter(fileValidator)
       .collect(Collectors.toList());
-
+    
     try {
       Path jsonPath = configureCProject(request.getProject(), filesToAnalyze, jsonFactory);
       core.debug("Wrote build info to: " + jsonPath.toString());
       request.getSonarProjectProperties().put(CFAMILY_USE_CACHE, Boolean.FALSE.toString());
       request.getSonarProjectProperties().put(BUILD_WRAPPER_OUTPUT_PROP, jsonPath.getParent().toString());
+      request.getSonarProjectProperties().putAll(fileSuffixes.getSuffixes(request.getProject(), filesToAnalyze));
     } catch (Exception e) {
       core.error(e.getMessage(), e);
     }

@@ -25,6 +25,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.anyMap;
@@ -42,7 +44,6 @@ import org.eclipse.cdt.core.parser.IScannerInfo;
 import org.eclipse.cdt.core.parser.IScannerInfoProvider;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -73,8 +74,10 @@ public class CProjectConfiguratorTest {
     fileValidator = mock(Predicate.class);
     core = mock(SonarLintCorePlugin.class);
     filePathResolver = mock(FilePathResolver.class);
+    FileSuffixes fileSuffixes = mock(FileSuffixes.class);
+    when(fileSuffixes.getSuffixes(any(IProject.class), anyCollection())).thenReturn(Collections.singletonMap("sonar.c.file.suffixes", ".c"));
     when(filePathResolver.getWorkDir()).thenReturn(temp.getRoot().toPath());
-    configurator = new CProjectConfigurator(jsonFactory, cCorePlugin, fileValidator, core, filePathResolver);
+    configurator = new CProjectConfigurator(jsonFactory, cCorePlugin, fileValidator, fileSuffixes, core, filePathResolver);
   }
 
   @Test
@@ -114,6 +117,7 @@ public class CProjectConfiguratorTest {
 
     // property created
     assertThat(props).containsOnly(
+      entry("sonar.c.file.suffixes", ".c"),
       entry("sonar.cfamily.build-wrapper-output", temp.getRoot().toPath().toString()),
       entry("sonar.cfamily.useCache", "false"));
 
